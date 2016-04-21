@@ -59,10 +59,8 @@ public class DiagnosisServiceTest extends TestBase {
 		@Mock
 		private IDiagnosisEngine<InvocationSequenceData> engine;
 
-		Map<String, Double> sessionVariables = new HashMap<String, Double>();
-
 		@Test
-		public void init() {
+		public void diagnose() {
 			invocationSequenceRoot = new InvocationSequenceData();
 			invocationSequenceRoot.setId(1);
 			invocationSequenceRoot.setDuration(5000d);
@@ -87,8 +85,28 @@ public class DiagnosisServiceTest extends TestBase {
 			invocationBaselinePair.add(pair);
 			nbrResults = diagnosisService.diagnose(invocationBaselinePair);
 			assertEquals(nbrResults, 1);
-		}
 
+			Map<String, Double> sessionVariables = new HashMap<String, Double>();
+			sessionVariables.put(RuleConstants.VAR_BASELINE, BASELINE);
+
+			try {
+				assertEquals(diagnosisService.init(), true);
+				verify(engine, times(2)).analyze(invocationSequenceRoot, sessionVariables);
+				diagnosisService.diagnose(invocationSequenceRoot, BASELINE);
+				Thread.sleep(1000);
+				verify(engine, times(3)).analyze(invocationSequenceRoot, sessionVariables);
+				diagnosisService.shutdown(true);
+				diagnosisService.diagnose(invocationSequenceRoot, BASELINE);
+				diagnosisService.diagnose(invocationSequenceRoot, BASELINE);
+				Thread.sleep(1000);
+				verify(engine, times(4)).analyze(invocationSequenceRoot, sessionVariables);
+			} catch (DiagnosisEngineException e) {
+				e.printStackTrace();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		}
 	}
 
 	public static class Init extends DiagnosisServiceTest {
