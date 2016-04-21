@@ -82,15 +82,14 @@ public class InvocationSequenceDataAggregator implements IAggregator<InvocationS
 	 * {@inheritDoc}
 	 */
 	@Override
-	public Object getAggregationKey(InvocationSequenceData invocationSequencecData) {
-		if (InvocationSequenceDataHelper.hasSQLData(invocationSequencecData)) {
-			return new Pair<Long, String>(invocationSequencecData.getMethodIdent(), invocationSequencecData.getSqlStatementData().getSql());
-		} else if (InvocationSequenceDataHelper.hasHttpTimerData(invocationSequencecData)) {
-			return new Pair<Long, String>(invocationSequencecData.getMethodIdent(), ((HttpTimerData) invocationSequencecData.getTimerData()).getHttpInfo().getUri());
+	public Object getAggregationKey(InvocationSequenceData invocationSequenceData) {
+		if (InvocationSequenceDataHelper.hasSQLData(invocationSequenceData)) {
+			return new Pair<Long, String>(invocationSequenceData.getMethodIdent(), invocationSequenceData.getSqlStatementData().getSql());
+		} else if (InvocationSequenceDataHelper.hasHttpTimerData(invocationSequenceData)) {
+			return new Pair<Long, String>(invocationSequenceData.getMethodIdent(), ((HttpTimerData) invocationSequenceData.getTimerData()).getHttpInfo().getUri());
 		} else {
-			return invocationSequencecData.getMethodIdent();
+			return invocationSequenceData.getMethodIdent();
 		}
-
 	}
 
 	/**

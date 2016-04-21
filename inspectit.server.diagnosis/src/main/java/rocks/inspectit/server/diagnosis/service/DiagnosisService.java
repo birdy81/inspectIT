@@ -160,6 +160,7 @@ public class DiagnosisService implements IDiagnosisService, Runnable {
 					} catch (DiagnosisEngineException e) {
 						log.info("During analyzing of DiagnosisEngine an exception occured");
 					}
+
 				}
 			}
 		} catch (InterruptedException e) {
