@@ -22,12 +22,15 @@ configurations {
 	}
 	testCompile {
 		extendsFrom configurations.serverDiagnosisTest
+		extendsFrom configurations.jmhbase
 	}
 }
 
 /** testCompile must depend on shared all test sources because of TestBase class */
 dependencies {
-	testCompile project (path: ':inspectit.shared.all', configuration: 'testArchives')
+	compile project(':inspectit.shared.all')
+	compile project(':inspectit.shared.cs')
+	testCompile project (path: ':inspectit.shared.all', configuration: 'testArchives')	
 }
 
 /** Compile compatibility to 1.7 for all compile tasks */
