@@ -43,6 +43,7 @@ configurations {
 dependencies {
 	compile project(':inspectit.shared.all')
 	compile project(':inspectit.shared.cs')
+	compile project(':inspectit.server.diagnosis')
 	testCompile project (path: ':inspectit.shared.all', configuration: 'testArchives')
 }
 

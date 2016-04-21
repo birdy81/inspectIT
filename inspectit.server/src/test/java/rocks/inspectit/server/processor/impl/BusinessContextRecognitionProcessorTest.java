@@ -49,6 +49,7 @@ import rocks.inspectit.shared.cs.cmr.service.cache.CachedDataService;
  */
 @SuppressWarnings("PMD")
 public class BusinessContextRecognitionProcessorTest extends TestBase {
+
 	@InjectMocks
 	BusinessContextRecognitionProcessor processor;
 
