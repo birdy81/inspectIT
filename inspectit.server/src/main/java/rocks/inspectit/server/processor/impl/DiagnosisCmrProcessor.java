@@ -75,7 +75,7 @@ public class DiagnosisCmrProcessor extends AbstractCmrDataProcessor implements I
 	@Override
 	public void onNewDiagnosisResult(ProblemOccurrence problemOccurrence) {
 		diagnosisResults.getDiagnosisResults().add(problemOccurrence);
-		// printProblemOccurence(problemOccurrence);
+		System.out.println("Problem found");
 	}
 
 	/**
@@ -84,9 +84,7 @@ public class DiagnosisCmrProcessor extends AbstractCmrDataProcessor implements I
 	@Override
 	public void onNewDiagnosisResult(Collection<ProblemOccurrence> problemOccurrences) {
 		diagnosisResults.getDiagnosisResults().addAll(problemOccurrences);
-		// for (ProblemOccurrence problemOccurrence : problemOccurrences) {
-		// printProblemOccurence(problemOccurrence);
-		// }
+		System.out.println("Problems found: " + problemOccurrences.size());
 	}
 
 	// /* TODO: Remove */
