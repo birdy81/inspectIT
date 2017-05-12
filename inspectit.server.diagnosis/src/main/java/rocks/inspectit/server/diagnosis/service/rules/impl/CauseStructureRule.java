@@ -10,6 +10,7 @@ import rocks.inspectit.server.diagnosis.service.rules.RuleConstants;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceDataHelper;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure.CauseType;
 
@@ -24,10 +25,15 @@ import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStru
 public class CauseStructureRule {
 
 	/**
+	 * Max number of calls that should be checked for recursion.
+	 */
+	private static final int MAXCALLSTOCHECK = 100;
+
+	/**
 	 * Injection of the <code>Problem Context</code>.
 	 */
 	@TagValue(type = RuleConstants.TAG_PROBLEM_CONTEXT)
-	private InvocationSequenceData problemContext;
+	private CauseCluster problemContext;
 
 	/**
 	 * Injection of the <code>Root Causes</code>.
@@ -49,11 +55,12 @@ public class CauseStructureRule {
 		}
 
 		// The Root Causes can only be in the invocation tree with the Problem Context as root node.
-		InvocationSequenceDataIterator iterator = new InvocationSequenceDataIterator(problemContext);
+		InvocationSequenceDataIterator iterator = new InvocationSequenceDataIterator(problemContext.getCommonContext());
 
 		Stack<Integer> recursionStack = new Stack<>();
 		int maxRecursionDepth = 0;
-		while (iterator.hasNext()) {
+		int maxIterationsToCheck = 0;
+		while (iterator.hasNext() && (maxIterationsToCheck < MAXCALLSTOCHECK) && (maxRecursionDepth < 2)) {
 			InvocationSequenceData invocation = iterator.next();
 			if (!recursionStack.isEmpty() && (recursionStack.peek() >= iterator.currentDepth())) {
 				recursionStack.pop();
@@ -64,6 +71,7 @@ public class CauseStructureRule {
 				if (recursionStack.size() > maxRecursionDepth) {
 					maxRecursionDepth = recursionStack.size();
 				}
+				maxIterationsToCheck++;
 			}
 		}
 

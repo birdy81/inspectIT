@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry excluding="rocks/inspectit/server/diagnosis/service/rules/CachedDataMapper.java" kind="src" path="src/main/java">
+	<classpathentry kind="src" path="src/main/java">
 		<attributes>
 			<attribute name="FROM_GRADLE_MODEL" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="src" path="src/test/java">
+	<classpathentry excluding="rocks/inspectit/server/diagnosis/service/rules/impl/ProblemContextRuleTest.java" kind="src" path="src/test/java">
 		<attributes>
 			<attribute name="FROM_GRADLE_MODEL" value="true"/>
 		</attributes>

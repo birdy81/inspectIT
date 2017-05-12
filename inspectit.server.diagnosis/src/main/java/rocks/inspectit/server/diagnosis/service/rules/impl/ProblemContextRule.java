@@ -1,6 +1,5 @@
 package rocks.inspectit.server.diagnosis.service.rules.impl;
 
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -11,6 +10,7 @@ import rocks.inspectit.server.diagnosis.service.rules.InvocationSequenceDataIter
 import rocks.inspectit.server.diagnosis.service.rules.RuleConstants;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 
 /**
  * Rule for detecting the <code>Problem Context</code> within an {@link InvocationSequenceData}. The
@@ -44,7 +44,7 @@ public class ProblemContextRule {
 	 * @return TAG_PROBLEM_CONTEXT
 	 */
 	@Action(resultTag = RuleConstants.TAG_PROBLEM_CONTEXT)
-	public InvocationSequenceData action() {
+	public CauseCluster action() {
 
 		List<InvocationSequenceData> causeInvocations = timeWastingOperation.getRawInvocationsSequenceElements();
 
@@ -57,6 +57,7 @@ public class ProblemContextRule {
 			// InvocationSequenceData are clustered until there is a cluster with a significant high
 			// exclusive time.
 			List<CauseCluster> causeClusters = new LinkedList<>();
+
 			for (InvocationSequenceData invocation : causeInvocations) {
 				causeClusters.add(new CauseCluster(invocation));
 				overallExclusiveDuration += invocation.getTimerData().isExclusiveTimeDataAvailable() ? invocation.getTimerData().getExclusiveDuration() : 0.0;
@@ -67,17 +68,14 @@ public class ProblemContextRule {
 
 			// Iterates as long as there is no significantCluster.
 			while (null == significantCluster) {
-
 				calculateDistancesToNextCluster(causeClusters);
-
 				causeClusters = mergeClusters(causeClusters);
-
 				significantCluster = getSignificantCluster(causeClusters, overallExclusiveDuration);
 			}
 
 			// The Problem Context is the deepest node in the invocation tree that subsumes all
 			// InvocationSequenceData the significant cluster holds.
-			return significantCluster.getCommonContext();
+			return significantCluster;
 
 			// If there is only one element in the Time Wasting Operation and it
 			// is the Global Context, then the Global Context is the Problem
@@ -85,12 +83,7 @@ public class ProblemContextRule {
 			// the only element is the Problem Context. If there is no parent,
 			// then the element itself is the Problem Context.
 		} else {
-			if (causeInvocations.get(0).equals(globalContext)) {
-				return causeInvocations.get(0);
-			}
-			InvocationSequenceData parent = causeInvocations.get(0).getParentSequence();
-
-			return parent != null ? parent : causeInvocations.get(0);
+			return new CauseCluster(causeInvocations.get(0));
 		}
 	}
 
@@ -111,7 +104,6 @@ public class ProblemContextRule {
 			newClusters.clear();
 			for (CauseCluster cluster : causeClusters) {
 				clustersToMerge.add(cluster);
-
 				if (cluster.getDistanceToNextCluster() > distance) {
 					if (clustersToMerge.size() > 1) {
 						newClusters.add(new CauseCluster(clustersToMerge));
@@ -199,96 +191,4 @@ public class ProblemContextRule {
 		currentCluster.setDistanceToNextCluster(Integer.MAX_VALUE);
 	}
 
-	/**
-	 * Class representing a cluster.
-	 *
-	 * @author Alexander Wert, Alper Hidiroglu
-	 *
-	 */
-	private static class CauseCluster {
-
-		/**
-		 * Holds the {@link InvocationSequenceData} of the cluster.
-		 */
-		private final List<InvocationSequenceData> causeInvocations = new ArrayList<>();
-
-		/**
-		 * Saves the distance to the next cluster.
-		 */
-		private int distanceToNextCluster = Integer.MAX_VALUE;
-
-		/**
-		 * The deepest node in the invocation tree that subsumes all {@link InvocationSequenceData}
-		 * the cluster holds.
-		 */
-		private final InvocationSequenceData commonContext;
-
-		/**
-		 * Adds an {@link InvocationSequenceData} to the list of elements the cluster holds. Is used
-		 * only for initial cluster. {@link commonContext} is initially the element with which the
-		 * cluster is created.
-		 *
-		 * @param causeInvocation
-		 *            The {@link InvocationSequenceData} this cluster is initially build with.
-		 */
-		CauseCluster(InvocationSequenceData causeInvocation) {
-			causeInvocations.add(causeInvocation);
-			commonContext = causeInvocation;
-		}
-
-		/**
-		 * Creates a new cluster from the passed list of {@link #CauseCluster}. Sets the
-		 * <code>commonContext</code> to the parent of the new cluster. The parent subsumes all
-		 * {@link InvocationSequenceData} the cluster currently holds.
-		 *
-		 * @param clustersToMerge
-		 *            List with clusters this cluster is merged with.
-		 */
-		CauseCluster(List<CauseCluster> clustersToMerge) {
-			int distanceToParent = clustersToMerge.get(0).getDistanceToNextCluster();
-			InvocationSequenceData parent = clustersToMerge.get(0).getCommonContext();
-			for (int i = 0; i < distanceToParent; i++) {
-				parent = parent.getParentSequence();
-			}
-			commonContext = parent;
-
-			for (CauseCluster cluster : clustersToMerge) {
-				causeInvocations.addAll(cluster.getCauseInvocations());
-			}
-		}
-
-		/**
-		 * @return {@link #causeInvocations} the cluster holds.
-		 */
-		public List<InvocationSequenceData> getCauseInvocations() {
-			return causeInvocations;
-		}
-
-		/**
-		 * @return {@link #distanceToNextCluster}.
-		 */
-		public int getDistanceToNextCluster() {
-			return distanceToNextCluster;
-		}
-
-		/**
-		 * Sets {@link #distanceToNextCluster}.
-		 *
-		 * @param distanceToNextCluster
-		 *            New value for {@link #distanceToNextCluster}
-		 */
-		public void setDistanceToNextCluster(int distanceToNextCluster) {
-			this.distanceToNextCluster = distanceToNextCluster;
-		}
-
-		/**
-		 * Gets {@link #commonContext}.
-		 *
-		 * @return {@link #commonContext}
-		 */
-		public InvocationSequenceData getCommonContext() {
-			return commonContext;
-		}
-
-	}
 }

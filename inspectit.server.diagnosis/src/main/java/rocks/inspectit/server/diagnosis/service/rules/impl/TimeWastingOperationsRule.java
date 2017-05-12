@@ -30,6 +30,12 @@ import rocks.inspectit.shared.cs.indexing.aggregation.impl.InvocationSequenceDat
 public class TimeWastingOperationsRule {
 
 	/**
+	 * Defines the minium number of calls to one method. If one method is called more often it is
+	 * considered to be a TimeWastingOperationsRule.
+	 */
+	private static final int MINNUMBEROFCALLSTOSAMEMETHOD = 20;
+
+	/**
 	 * Proportion value for comparison.
 	 */
 	private static final Double PROPORTION = 0.8;
@@ -63,8 +69,8 @@ public class TimeWastingOperationsRule {
 		// InvocationSequenceData. Exclusive times are summed up.
 		aggregationPerformer.processCollection(invocationSequenceDataList);
 		invocationSequenceDataList = aggregationPerformer.getResultList();
-		Collections.sort(invocationSequenceDataList, new Comparator<InvocationSequenceData>() {
 
+		Collections.sort(invocationSequenceDataList, new Comparator<InvocationSequenceData>() {
 			/**
 			 * Sorts list with aggregated {@link InvocationSequenceData} with the help of the summed
 			 * up exclusive times.
@@ -80,10 +86,10 @@ public class TimeWastingOperationsRule {
 		List<AggregatedInvocationSequenceData> timeWastingOperations = new ArrayList<>();
 		double sumExecTime = 0;
 		for (InvocationSequenceData invocSeqData : invocationSequenceDataList) {
-
-			if (((globalContext.getDuration() - sumExecTime) > baseline) || (sumExecTime < (PROPORTION * globalContext.getDuration()))) {
+			AggregatedInvocationSequenceData aggInvocSeqData = (AggregatedInvocationSequenceData) invocSeqData;
+			if (((globalContext.getDuration() - sumExecTime) > baseline) || (sumExecTime < (PROPORTION * globalContext.getDuration())) || (aggInvocSeqData.size() > MINNUMBEROFCALLSTOSAMEMETHOD)) {
 				sumExecTime += InvocationSequenceDataHelper.calculateExclusiveTime(invocSeqData);
-				timeWastingOperations.add((AggregatedInvocationSequenceData) invocSeqData);
+				timeWastingOperations.add(aggInvocSeqData);
 			} else {
 				break;
 			}
@@ -104,7 +110,6 @@ public class TimeWastingOperationsRule {
 	 */
 	private List<InvocationSequenceData> asInvocationSequenceDataList(List<InvocationSequenceData> invocationSequences, final List<InvocationSequenceData> resultList) {
 		for (InvocationSequenceData invocationSequence : invocationSequences) {
-
 			// Either timer data has to be available
 			if ((null != invocationSequence.getTimerData()) && invocationSequence.getTimerData().isExclusiveTimeDataAvailable()) {
 				resultList.add(invocationSequence);

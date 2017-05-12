@@ -16,6 +16,7 @@ import rocks.inspectit.server.diagnosis.engine.tag.TagState;
 import rocks.inspectit.server.diagnosis.service.rules.RuleConstants;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.ProblemOccurrence;
 
@@ -41,12 +42,12 @@ public class ProblemOccurenceResultCollector implements ISessionResultCollector<
 		Collection<Tag> leafTags = sessionContext.getStorage().mapTags(TagState.LEAF).values();
 		for (Tag leafTag : leafTags) {
 			InvocationSequenceData globalContext = getGlobalContext(leafTag);
-			InvocationSequenceData problemContext = getProblemContext(leafTag);
+			CauseCluster problemContext = getProblemContext(leafTag);
 			AggregatedInvocationSequenceData rootCauseInvocations = getRootCauseInvocations(leafTag);
 			CauseStructure causeStructure = getCauseStructure(leafTag);
 
 			// create new ProblemOccurrence
-			ProblemOccurrence problem = new ProblemOccurrence(inputInvocationSequence, globalContext, problemContext, rootCauseInvocations, causeStructure);
+			ProblemOccurrence problem = new ProblemOccurrence(inputInvocationSequence, globalContext, problemContext.getCommonContext(), rootCauseInvocations, causeStructure);
 			problem.setPlatformIdent(inputInvocationSequence.getPlatformIdent());
 			problem.setTimeStamp(inputInvocationSequence.getTimeStamp());
 			problem.setSensorTypeIdent(inputInvocationSequence.getSensorTypeIdent());
@@ -81,10 +82,10 @@ public class ProblemOccurenceResultCollector implements ISessionResultCollector<
 	 *            leafTag for which the InvocationSequenceData should be returned
 	 * @return InvocationSequenceData of ProblemContext
 	 */
-	private InvocationSequenceData getProblemContext(Tag leafTag) {
+	private CauseCluster getProblemContext(Tag leafTag) {
 		while (null != leafTag) {
 			if (leafTag.getType().equals(RuleConstants.TAG_PROBLEM_CONTEXT)) {
-				return (InvocationSequenceData) leafTag.getValue();
+				return (CauseCluster) leafTag.getValue();
 			}
 			leafTag = leafTag.getParent();
 		}

@@ -1,8 +1,5 @@
 package rocks.inspectit.server.diagnosis.service.rules.impl;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.moment.StandardDeviation;
@@ -14,6 +11,7 @@ import rocks.inspectit.server.diagnosis.service.rules.RuleConstants;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceDataHelper;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.cs.indexing.aggregation.impl.InvocationSequenceDataAggregator;
 
 /**
@@ -34,16 +32,10 @@ public class ProblemCauseRule {
 	private static final Double PROPORTION = 0.8;
 
 	/**
-	 * <code>Root Cause</code> candidates had to be in a <code>Time Wasting Operation</code> object.
-	 */
-	@TagValue(type = RuleConstants.TAG_TIME_WASTING_OPERATIONS)
-	private AggregatedInvocationSequenceData timeWastingOperation;
-
-	/**
 	 * Injection of the <code>Problem Context</code>.
 	 */
 	@TagValue(type = RuleConstants.TAG_PROBLEM_CONTEXT)
-	private InvocationSequenceData problemContext;
+	private CauseCluster problemContext;
 
 	/**
 	 * Rule execution.
@@ -57,29 +49,15 @@ public class ProblemCauseRule {
 		 * Holds all reachable {@link #InvocationSequenceData} from the <code>Problem Context</code>
 		 * that were in the <code>Time Wasting Operation</code>.
 		 */
-		List<InvocationSequenceData> causeCandidates = asInvocationSequenceDataList(
-				Collections.singletonList(problemContext), new ArrayList<InvocationSequenceData>());
-		Collections.sort(causeCandidates, new Comparator<InvocationSequenceData>() {
-
-			/**
-			 * Sorts causeCandidates with the help of their exclusive times.
-			 */
-			@Override
-			public int compare(InvocationSequenceData o1, InvocationSequenceData o2) {
-				return Double.compare(InvocationSequenceDataHelper.calculateExclusiveTime(o2),
-						InvocationSequenceDataHelper.calculateExclusiveTime(o1));
-			}
-		});
-
+		List<InvocationSequenceData> causeCandidates = problemContext.getCauseInvocations();
 		double sumExclusiveTime = 0.0;
 		int i = 0;
 		InvocationSequenceDataAggregator aggregator = new InvocationSequenceDataAggregator();
 		AggregatedInvocationSequenceData rootCause = null;
 
 		// Root Cause candidates with highest exclusive times are aggregated.
-		while ((sumExclusiveTime < (PROPORTION * InvocationSequenceDataHelper.calculateDuration(problemContext)))
+		while ((sumExclusiveTime < (PROPORTION * InvocationSequenceDataHelper.calculateDuration(problemContext.getCommonContext())))
 				&& (i < causeCandidates.size())) {
-
 			InvocationSequenceData invocation = causeCandidates.get(i);
 			if (null == rootCause) {
 				rootCause = (AggregatedInvocationSequenceData) aggregator.getClone(invocation);
@@ -90,7 +68,7 @@ public class ProblemCauseRule {
 		}
 
 		// Three-Sigma Limit approach for further aggregation.
-		if (i > 1) {
+		if ((i > 1) && (i < causeCandidates.size())) {
 			double mean = sumExclusiveTime / i;
 			double[] durations = new double[rootCause.size()];
 			int j = 0;
@@ -115,32 +93,6 @@ public class ProblemCauseRule {
 		}
 
 		return rootCause;
-	}
-
-	/**
-	 * All {@link #InvocationSequenceData} that were in the <code>Time Wasting
-	 * Operation</code> are possible cause candidates and are saved to this list. Starts at the
-	 * <code>Problem Context</code>.
-	 *
-	 * @param invocationSequences
-	 *            List that only holds the <code>Problem Context</code>.
-	 * @param resultList
-	 *            List that holds all {@link InvocationSequenceData} that are reachable from the
-	 *            <code>Problem Context</code> and that were in the
-	 *            <code>Time Wasting Operation</code>.
-	 * @return List with {@link InvocationSequenceData}.
-	 */
-	private List<InvocationSequenceData> asInvocationSequenceDataList(List<InvocationSequenceData> invocationSequences,
-			final List<InvocationSequenceData> resultList) {
-		for (InvocationSequenceData invocationSequence : invocationSequences) {
-			if ((invocationSequence.getMethodIdent() == timeWastingOperation.getMethodIdent())
-					&& (InvocationSequenceDataHelper.calculateExclusiveTime(invocationSequence) > 0.0)) {
-				resultList.add(invocationSequence);
-			}
-			asInvocationSequenceDataList(invocationSequence.getNestedSequences(), resultList);
-		}
-
-		return resultList;
 	}
 
 }
