@@ -18,6 +18,7 @@ import org.testng.annotations.Test;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.TimerData;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.all.testbase.TestBase;
 
 public class ProblemContextRuleTest extends TestBase {
@@ -49,9 +50,9 @@ public class ProblemContextRuleTest extends TestBase {
 			rawInvocations.add(parentSequence);
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 
-			InvocationSequenceData problemContext = problemContextRule.action();
+			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the invoker", problemContext, is(equalTo(parentSequence)));
+			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(equalTo(parentSequence)));
 		}
 
 		@Test
@@ -61,9 +62,9 @@ public class ProblemContextRuleTest extends TestBase {
 			rawInvocations.add(childSequence);
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 
-			InvocationSequenceData problemContext = problemContextRule.action();
+			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the invoker", problemContext, is(equalTo(childSequence.getParentSequence())));
+			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(equalTo(childSequence.getParentSequence())));
 		}
 
 		@Test
@@ -131,9 +132,9 @@ public class ProblemContextRuleTest extends TestBase {
 
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocationsSignificant);
 			when(globalContext.getNestedSequences()).thenReturn(rawInvocations);
-			InvocationSequenceData problemContext = problemContextRule.action();
+			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context", problemContext, is(equalTo(significantContext)));
+			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(equalTo(significantContext)));
 		}
 
 		@Test
@@ -148,9 +149,9 @@ public class ProblemContextRuleTest extends TestBase {
 
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 
-			InvocationSequenceData problemContext = problemContextRule.action();
+			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context", problemContext, is(equalTo(globalContext)));
+			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(equalTo(globalContext)));
 		}
 
 		@Test
@@ -170,9 +171,9 @@ public class ProblemContextRuleTest extends TestBase {
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocationsSignificant);
 			when(globalContext.getNestedSequences()).thenReturn(rawInvocations);
 
-			InvocationSequenceData problemContext = problemContextRule.action();
+			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context with one invocation sequence", problemContext, is(equalTo(globalContext)));
+			assertThat("The returned problemContext must be the most significant cluster context with one invocation sequence", problemContext.getCommonContext(), is(equalTo(globalContext)));
 		}
 
 	}

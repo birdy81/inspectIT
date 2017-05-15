@@ -2,7 +2,7 @@
 <cmr-configuration xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="schema/configurationSchema.xsd">
 	<section name="Jetty">
 		<properties>
-			<long-property name="Port" default-value="8183" server-restart-required="true" logical-name="jetty.port" advanced="false"
+			<long-property name="Port" default-value="8182" server-restart-required="true" logical-name="jetty.port" advanced="false"
 				description="Port that will be opened for the communication to the inspectIT User interface.">
 				<validators>
 					<isPositive />
@@ -115,7 +115,7 @@
 	</section>
 	<section name="General settings">
 		<properties>
-			<long-property name="Port" default-value="9071" server-restart-required="true" logical-name="cmr.port" advanced="false" description="The port used for communicating with agents.">
+			<long-property name="Port" default-value="9070" server-restart-required="true" logical-name="cmr.port" advanced="false" description="The port used for communicating with agents.">
 				<validators>
 					<isPositive />
 				</validators>

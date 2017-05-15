@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 
 import java.sql.Timestamp;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Random;
@@ -19,6 +20,7 @@ import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenc
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.SqlStatementData;
 import rocks.inspectit.shared.all.communication.data.TimerData;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure.CauseType;
 import rocks.inspectit.shared.all.testbase.TestBase;
@@ -29,7 +31,10 @@ public class CauseStructureRuleTest extends TestBase {
 	CauseStructureRule causeStructureRule;
 
 	@Mock
-	InvocationSequenceData problemContext;
+	CauseCluster problemContext;
+
+	@Mock
+	InvocationSequenceData commonContext;
 
 	@Mock
 	AggregatedInvocationSequenceData cause;
@@ -48,6 +53,7 @@ public class CauseStructureRuleTest extends TestBase {
 		public void timerDataMustReturnAnInstanceOfSingleCauseTypeIfTheCauseHasJustOneElement() {
 			List<InvocationSequenceData> rawInvocations = new ArrayList<>();
 			rawInvocations.add(new InvocationSequenceData());
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.size()).thenReturn(1);
@@ -62,7 +68,7 @@ public class CauseStructureRuleTest extends TestBase {
 			List<InvocationSequenceData> rawInvocations = new ArrayList<>();
 			rawInvocations.add(new InvocationSequenceData());
 
-			InvocationSequenceData problemContextParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
+			InvocationSequenceData problemContextParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
 			problemContextParent.setTimerData(TIMER_DATA);
 
 			InvocationSequenceData problemContextChild1 = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
@@ -76,9 +82,12 @@ public class CauseStructureRuleTest extends TestBase {
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.size()).thenReturn(3);
-			when(problemContext.getParentSequence()).thenReturn(problemContextParent);
-			when(problemContext.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
-			when(problemContext.getTimerData()).thenReturn(TIMER_DATA);
+
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
+			when(commonContext.getParentSequence()).thenReturn(null);
+			when(commonContext.getNestedSequences()).thenReturn(Collections.singletonList(problemContextParent));
+			when(commonContext.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
+			when(commonContext.getTimerData()).thenReturn(TIMER_DATA);
 
 			CauseStructure causeStructure = causeStructureRule.action();
 
@@ -97,8 +106,10 @@ public class CauseStructureRuleTest extends TestBase {
 			List<InvocationSequenceData> rawInvocations = new ArrayList<>();
 			rawInvocations.add(new InvocationSequenceData());
 			rawInvocations.add(childSequence);
-			when(problemContext.getParentSequence()).thenReturn(parentSequence);
-			when(problemContext.getTimerData()).thenReturn(TIMER_DATA);
+
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
+			when(commonContext.getParentSequence()).thenReturn(parentSequence);
+			when(commonContext.getTimerData()).thenReturn(TIMER_DATA);
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 
@@ -107,8 +118,8 @@ public class CauseStructureRuleTest extends TestBase {
 			assertThat("The returned cause type must be iterative", causeStructure.getCauseType(), is(CauseType.ITERATIVE));
 		}
 
-		@Test
-		public void timerDataMustReturnAnInstanceOfIterativeCauseTypeIfTheCauseHasNoElements() {
+		@Test(expectedExceptions = IllegalArgumentException.class)
+		public void expectedExceptionsIfTheCauseHasNoElements() {
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.size()).thenReturn(0);
 
@@ -124,18 +135,26 @@ public class CauseStructureRuleTest extends TestBase {
 			SqlStatementData sqlData = new SqlStatementData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
 			sqlData.setCount(1);
 			sqlData.setSql("somethingsomething");
-			InvocationSequenceData problemContextParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
-			problemContextParent.setSqlStatementData(sqlData);
-			InvocationSequenceData problemContextGrandParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			problemContextGrandParent.setSqlStatementData(sqlData);
-			problemContextParent.setParentSequence(problemContextGrandParent);
+
+			InvocationSequenceData problemContextOne = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
+			problemContextOne.setSqlStatementData(sqlData);
+
+			InvocationSequenceData problemContextTwo = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
+			problemContextTwo.setSqlStatementData(sqlData);
+
+			problemContextOne.setParentSequence(commonContext);
+			problemContextTwo.setParentSequence(problemContextOne);
+
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.size()).thenReturn(3);
 			when(cause.getSqlStatementData()).thenReturn(sqlData);
-			when(problemContext.getParentSequence()).thenReturn(problemContextParent);
-			when(problemContext.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
-			when(problemContext.getSqlStatementData()).thenReturn(sqlData);
+
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
+			when(commonContext.getParentSequence()).thenReturn(null);
+			when(commonContext.getNestedSequences()).thenReturn(Collections.singletonList(problemContextOne));
+			when(commonContext.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
+			when(commonContext.getSqlStatementData()).thenReturn(sqlData);
 
 			CauseStructure causeStructure = causeStructureRule.action();
 

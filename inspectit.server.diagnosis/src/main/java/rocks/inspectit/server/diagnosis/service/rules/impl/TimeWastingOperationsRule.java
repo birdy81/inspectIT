@@ -30,7 +30,7 @@ import rocks.inspectit.shared.cs.indexing.aggregation.impl.InvocationSequenceDat
 public class TimeWastingOperationsRule {
 
 	/**
-	 * Defines the minium number of calls to one method. If one method is called more often it is
+	 * Defines the minimum number of calls to one method. If one method is called more often it is
 	 * considered to be a TimeWastingOperationsRule.
 	 */
 	private static final int MINNUMBEROFCALLSTOSAMEMETHOD = 20;
@@ -120,7 +120,6 @@ public class TimeWastingOperationsRule {
 			}
 			asInvocationSequenceDataList(invocationSequence.getNestedSequences(), resultList);
 		}
-
 		return resultList;
 	}
 }

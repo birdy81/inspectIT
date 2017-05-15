@@ -47,7 +47,8 @@ public class ProblemCauseRule {
 
 		/**
 		 * Holds all reachable {@link #InvocationSequenceData} from the <code>Problem Context</code>
-		 * that were in the <code>Time Wasting Operation</code>.
+		 * that were in the <code>Time Wasting Operation</code>. We do not sort the causeCandidates
+		 * for reasons of performance .
 		 */
 		List<InvocationSequenceData> causeCandidates = problemContext.getCauseInvocations();
 		double sumExclusiveTime = 0.0;
@@ -63,7 +64,7 @@ public class ProblemCauseRule {
 				rootCause = (AggregatedInvocationSequenceData) aggregator.getClone(invocation);
 			}
 			aggregator.aggregate(rootCause, invocation);
-			sumExclusiveTime += InvocationSequenceDataHelper.calculateDuration(invocation);
+			sumExclusiveTime += InvocationSequenceDataHelper.calculateExclusiveTime(invocation);
 			i++;
 		}
 

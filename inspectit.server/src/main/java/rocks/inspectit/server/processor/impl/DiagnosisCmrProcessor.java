@@ -110,7 +110,6 @@ public class DiagnosisCmrProcessor extends AbstractCmrDataProcessor implements I
 			ArrayList<TimerDataProblemOccurence> rootCauseList = rootCauseMapping.get(key);
 
 			double sum = 0;
-
 			for (int i = 0; i < rootCauseList.size(); i++) {
 				sum += rootCauseList.get(i).getExclusiveTime();
 			}

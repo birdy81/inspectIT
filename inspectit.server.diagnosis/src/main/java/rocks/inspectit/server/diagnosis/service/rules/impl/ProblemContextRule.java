@@ -57,7 +57,6 @@ public class ProblemContextRule {
 			// InvocationSequenceData are clustered until there is a cluster with a significant high
 			// exclusive time.
 			List<CauseCluster> causeClusters = new LinkedList<>();
-
 			for (InvocationSequenceData invocation : causeInvocations) {
 				causeClusters.add(new CauseCluster(invocation));
 				overallExclusiveDuration += invocation.getTimerData().isExclusiveTimeDataAvailable() ? invocation.getTimerData().getExclusiveDuration() : 0.0;
