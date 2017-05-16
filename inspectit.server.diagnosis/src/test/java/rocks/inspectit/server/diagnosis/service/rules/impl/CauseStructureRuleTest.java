@@ -137,18 +137,20 @@ public class CauseStructureRuleTest extends TestBase {
 			sqlData.setSql("somethingsomething");
 
 			InvocationSequenceData problemContextOne = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			problemContextOne.setSqlStatementData(sqlData);
+			problemContextOne.setTimerData(sqlData);
 
 			InvocationSequenceData problemContextTwo = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			problemContextTwo.setSqlStatementData(sqlData);
+			problemContextTwo.setTimerData(sqlData);
 
 			problemContextOne.setParentSequence(commonContext);
+			problemContextOne.setNestedSequences(Collections.singletonList(problemContextTwo));
 			problemContextTwo.setParentSequence(problemContextOne);
+
 
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.size()).thenReturn(3);
-			when(cause.getSqlStatementData()).thenReturn(sqlData);
+			when(cause.getTimerData()).thenReturn(sqlData);
 
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
 			when(commonContext.getParentSequence()).thenReturn(null);
@@ -158,7 +160,7 @@ public class CauseStructureRuleTest extends TestBase {
 
 			CauseStructure causeStructure = causeStructureRule.action();
 
-			assertThat("The returned cause type must be recursive", causeStructure.getCauseType(), is(CauseType.RECURSIVE));
+			assertThat("The returned cause type must be recursive", causeStructure.getCauseType(), is(CauseType.RECURSIVE_DATABASE));
 		}
 
 

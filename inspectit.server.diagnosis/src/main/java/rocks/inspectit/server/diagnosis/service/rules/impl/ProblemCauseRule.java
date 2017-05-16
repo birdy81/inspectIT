@@ -74,7 +74,7 @@ public class ProblemCauseRule {
 			double[] durations = new double[rootCause.size()];
 			int j = 0;
 			for (InvocationSequenceData invocation : rootCause.getRawInvocationsSequenceElements()) {
-				durations[j] = InvocationSequenceDataHelper.calculateDuration(invocation);
+				durations[j] = InvocationSequenceDataHelper.calculateExclusiveTime(invocation);
 				j++;
 			}
 
@@ -84,7 +84,7 @@ public class ProblemCauseRule {
 
 			for (int k = i; k < causeCandidates.size(); k++) {
 				InvocationSequenceData invocation = causeCandidates.get(k);
-				double duration = InvocationSequenceDataHelper.calculateDuration(invocation);
+				double duration = InvocationSequenceDataHelper.calculateExclusiveTime(invocation);
 				if (duration > lowerThreshold) {
 					aggregator.aggregate(rootCause, invocation);
 				} else {

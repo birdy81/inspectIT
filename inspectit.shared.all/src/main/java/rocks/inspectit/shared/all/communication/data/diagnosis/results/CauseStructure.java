@@ -131,7 +131,19 @@ public class CauseStructure implements Serializable {
 		/**
 		 * The Cause Type is due to recursive calls.
 		 */
-		RECURSIVE
+		RECURSIVE,
+		/**
+		 * The Cause Type is mainly one method to database.
+		 */
+		SINGLE_DATABASE,
+		/**
+		 * The Cause Type is due to iterative calls to database..
+		 */
+		ITERATIVE_DATABASE,
+		/**
+		 * The Cause Type is due to recursive calls to database..
+		 */
+		RECURSIVE_DATABASE
 	}
 
 }

@@ -24,6 +24,7 @@ import rocks.inspectit.server.diagnosis.service.rules.RuleConstants;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.TimerData;
+import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseCluster;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseStructure.CauseType;
 import rocks.inspectit.shared.all.communication.data.diagnosis.results.ProblemOccurrence;
@@ -109,7 +110,7 @@ public class ProblemOccurenceResultCollectorTest extends TestBase {
 
 			Multimap<String, Tag> tagMap = ArrayListMultimap.create();
 			Tag tagOne = new Tag(RuleConstants.TAG_GLOBAL_CONTEXT, secondChildSequence, Tags.rootTag(secondChildSequence));
-			Tag tagTwo = new Tag(RuleConstants.TAG_PROBLEM_CONTEXT, secondChildSequence, tagOne);
+			Tag tagTwo = new Tag(RuleConstants.TAG_PROBLEM_CONTEXT, new CauseCluster(secondChildSequence), tagOne);
 			Tag tagThree = new Tag(RuleConstants.TAG_PROBLEM_CAUSE, aggregatedInvocationSequenceData, tagTwo);
 			Tag tagFour = new Tag(RuleConstants.TAG_CAUSE_STRUCTURE, causeStructure, tagThree);
 

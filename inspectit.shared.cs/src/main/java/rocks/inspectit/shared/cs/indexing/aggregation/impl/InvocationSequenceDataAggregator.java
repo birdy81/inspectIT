@@ -3,6 +3,7 @@ package rocks.inspectit.shared.cs.indexing.aggregation.impl;
 import org.apache.commons.math3.util.Pair;
 
 import rocks.inspectit.shared.all.communication.IAggregatedData;
+import rocks.inspectit.shared.all.communication.data.AggregatedHttpTimerData;
 import rocks.inspectit.shared.all.communication.data.AggregatedInvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.AggregatedSqlStatementData;
 import rocks.inspectit.shared.all.communication.data.AggregatedTimerData;
@@ -35,8 +36,6 @@ public class InvocationSequenceDataAggregator implements IAggregator<InvocationS
 
 		if (InvocationSequenceDataHelper.hasTimerData(aggregatedObject.getData())) {
 			aggregatedObject.getData().getTimerData().aggregateTimerData(objectToAdd.getTimerData());
-		} else if (InvocationSequenceDataHelper.hasSQLData(aggregatedObject.getData())) {
-			aggregatedObject.getData().getSqlStatementData().aggregateTimerData(objectToAdd.getSqlStatementData());
 		} else {
 			throw new IllegalArgumentException("No timer data available!");
 		}
@@ -53,25 +52,37 @@ public class InvocationSequenceDataAggregator implements IAggregator<InvocationS
 		clone.setPlatformIdent(invocationSequenceData.getPlatformIdent());
 		clone.setSensorTypeIdent(invocationSequenceData.getSensorTypeIdent());
 		clone.setMethodIdent(invocationSequenceData.getMethodIdent());
+
 		if (InvocationSequenceDataHelper.hasTimerData(invocationSequenceData)) {
-			TimerData timerData = invocationSequenceData.getTimerData();
-			TimerData timerDataClone = new AggregatedTimerData();
-			timerDataClone.setPlatformIdent(timerData.getPlatformIdent());
-			timerDataClone.setSensorTypeIdent(timerData.getSensorTypeIdent());
-			timerDataClone.setMethodIdent(timerData.getMethodIdent());
-			timerDataClone.setCharting(timerData.isCharting());
-			clone.setTimerData(timerDataClone);
-		} else if (InvocationSequenceDataHelper.hasSQLData(invocationSequenceData)) {
-			SqlStatementData sqlStatementData = invocationSequenceData.getSqlStatementData();
-			SqlStatementData sqlStatementDataClone = new AggregatedSqlStatementData();
-			sqlStatementDataClone.setPlatformIdent(sqlStatementData.getPlatformIdent());
-			sqlStatementDataClone.setSensorTypeIdent(sqlStatementData.getSensorTypeIdent());
-			sqlStatementDataClone.setPreparedStatement(sqlStatementData.isPreparedStatement());
-			sqlStatementDataClone.setSql(sqlStatementData.getSql());
-			sqlStatementDataClone.setDatabaseProductName(sqlStatementData.getDatabaseProductName());
-			sqlStatementDataClone.setDatabaseProductVersion(sqlStatementData.getDatabaseProductVersion());
-			sqlStatementDataClone.setDatabaseUrl(sqlStatementData.getDatabaseUrl());
-			clone.setSqlStatementData(sqlStatementDataClone);
+			if (invocationSequenceData.getTimerData() instanceof SqlStatementData) {
+				SqlStatementData sqlStatementData = invocationSequenceData.getSqlStatementData();
+				SqlStatementData sqlStatementDataClone = new AggregatedSqlStatementData();
+				sqlStatementDataClone.setPlatformIdent(sqlStatementData.getPlatformIdent());
+				sqlStatementDataClone.setSensorTypeIdent(sqlStatementData.getSensorTypeIdent());
+				sqlStatementDataClone.setPreparedStatement(sqlStatementData.isPreparedStatement());
+				sqlStatementDataClone.setSql(sqlStatementData.getSql());
+				sqlStatementDataClone.setDatabaseProductName(sqlStatementData.getDatabaseProductName());
+				sqlStatementDataClone.setDatabaseProductVersion(sqlStatementData.getDatabaseProductVersion());
+				sqlStatementDataClone.setDatabaseUrl(sqlStatementData.getDatabaseUrl());
+				clone.setTimerData(sqlStatementDataClone);
+			} else if (invocationSequenceData.getTimerData() instanceof HttpTimerData) {
+				HttpTimerData httpTimerData = (HttpTimerData) invocationSequenceData.getTimerData();
+				HttpTimerData httpTimerDataClone = new AggregatedHttpTimerData();
+				httpTimerDataClone.setPlatformIdent(httpTimerData.getPlatformIdent());
+				httpTimerDataClone.setSensorTypeIdent(httpTimerData.getSensorTypeIdent());
+				httpTimerDataClone.setMethodIdent(httpTimerData.getMethodIdent());
+				httpTimerDataClone.setCharting(httpTimerData.isCharting());
+				httpTimerDataClone.setHttpInfo(httpTimerData.getHttpInfo());
+				clone.setTimerData(httpTimerDataClone);
+			} else {
+				TimerData timerData = invocationSequenceData.getTimerData();
+				TimerData timerDataClone = new AggregatedTimerData();
+				timerDataClone.setPlatformIdent(timerData.getPlatformIdent());
+				timerDataClone.setSensorTypeIdent(timerData.getSensorTypeIdent());
+				timerDataClone.setMethodIdent(timerData.getMethodIdent());
+				timerDataClone.setCharting(timerData.isCharting());
+				clone.setTimerData(timerDataClone);
+			}
 		} else {
 			throw new IllegalArgumentException("No timer data available!");
 		}
