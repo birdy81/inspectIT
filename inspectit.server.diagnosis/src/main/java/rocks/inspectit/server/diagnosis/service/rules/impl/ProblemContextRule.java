@@ -26,6 +26,12 @@ import rocks.inspectit.shared.all.communication.data.diagnosis.results.CauseClus
 public class ProblemContextRule {
 
 	/**
+	 * Exclusive time of cluster has to be higher than 80 percent of
+	 * <code>Time Wasting Operation's</code> exclusive time in order to be a significant cluster.
+	 */
+	private static final double PROPORTION = 0.8;
+
+	/**
 	 * Injection of the <code>Global Context</code>.
 	 */
 	@TagValue(type = RuleConstants.TAG_GLOBAL_CONTEXT)
@@ -72,15 +78,14 @@ public class ProblemContextRule {
 				significantCluster = getSignificantCluster(causeClusters, overallExclusiveDuration);
 			}
 
+			// This rule does not return the Problem Context directly, but the significant cluster.
 			// The Problem Context is the deepest node in the invocation tree that subsumes all
-			// InvocationSequenceData the significant cluster holds.
+			// InvocationSequenceData the significant cluster holds and can be accessed via
+			// cluster.getCommonContext().
 			return significantCluster;
 
-			// If there is only one element in the Time Wasting Operation and it
-			// is the Global Context, then the Global Context is the Problem
-			// Context. When it is not the Global Context, then the parent of
-			// the only element is the Problem Context. If there is no parent,
-			// then the element itself is the Problem Context.
+			// In case there is just one cause invocation. The Problem Context is the cause
+			// invocation itself.
 		} else {
 			return new CauseCluster(causeInvocations.get(0));
 		}
@@ -136,7 +141,7 @@ public class ProblemContextRule {
 			for (InvocationSequenceData invocation : cluster.getCauseInvocations()) {
 				exclusiveDurationSum += invocation.getTimerData().isExclusiveTimeDataAvailable() ? invocation.getTimerData().getExclusiveDuration() : 0.0;
 			}
-			if (exclusiveDurationSum > (0.8 * overallExclusiveDuration)) {
+			if (exclusiveDurationSum > (PROPORTION * overallExclusiveDuration)) {
 				return cluster;
 			}
 		}

@@ -29,7 +29,7 @@ public class CauseStructureRule {
 	/**
 	 * Max number of calls that should be checked for recursion.
 	 */
-	private static final int MAXCALLSTOCHECK = 100;
+	private static final int MAX_CALLS_TO_CHECK = 100;
 
 	/**
 	 * Injection of the <code>Problem Context</code>.
@@ -63,10 +63,12 @@ public class CauseStructureRule {
 		// The Root Causes can only be in the invocation tree with the Problem Context as root node.
 		InvocationSequenceDataIterator iterator = new InvocationSequenceDataIterator(problemContext.getCommonContext());
 
+		// Checks if a Root Cause method is called by another Root Cause method. If so, there is
+		// recursion.
 		Stack<Integer> recursionStack = new Stack<>();
 		int maxRecursionDepth = 0;
 		int maxIterationsToCheck = 0;
-		while (iterator.hasNext() && (maxIterationsToCheck < MAXCALLSTOCHECK) && (maxRecursionDepth < 2)) {
+		while (iterator.hasNext() && (maxIterationsToCheck < MAX_CALLS_TO_CHECK) && (maxRecursionDepth < 2)) {
 			InvocationSequenceData invocation = iterator.next();
 			if (!recursionStack.isEmpty() && (recursionStack.peek() >= iterator.currentDepth())) {
 				recursionStack.pop();

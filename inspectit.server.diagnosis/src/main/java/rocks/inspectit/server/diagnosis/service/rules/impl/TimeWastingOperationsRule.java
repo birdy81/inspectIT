@@ -19,9 +19,9 @@ import rocks.inspectit.shared.cs.indexing.aggregation.impl.InvocationSequenceDat
 /**
  * Rule for detecting <code>Time Wasting Operations</code> within an {@link InvocationSequenceData}.
  * The search starts from the <code>Global Context</code>. A <code>Time Wasting Operation</code> is
- * an aggregated {@link InvocationSequenceData} that holds all calls to one operation which together
- * have a high exclusive time or simply put, are the biggest time waster. This rule is triggered
- * second in the rule pipeline.
+ * an {@link AggregatedInvocationSequenceData} that holds all methods with the same key which
+ * together have a high exclusive time or simply put, are the biggest time waster. This rule is
+ * triggered second in the rule pipeline.
  *
  * @author Alexander Wert, Alper Hidiroglu
  *
@@ -31,17 +31,23 @@ public class TimeWastingOperationsRule {
 
 	/**
 	 * Defines the minimum number of calls to one method. If one method is called more often it is
-	 * considered to be a TimeWastingOperationsRule.
+	 * considered to be a <code>Time Wasting Operation</code>.
 	 */
-	private static final int MINNUMBEROFCALLSTOSAMEMETHOD = 20;
+	private static final int MIN_NUMBER_OF_CALLS_TO_SAME_METHOD = 20;
 
 	/**
-	 * Proportion value for comparison.
+	 * An {@link AggregatedInvocationSequenceData} is considered as a
+	 * <code>Time Wasting Operation</code>, if the cumulative exclusive time of already found
+	 * <code>Time Wasting Operations</code> is lower than 80 percent of the
+	 * <code>Global Context's</code> duration.
 	 */
 	private static final Double PROPORTION = 0.8;
 
 	/**
-	 * Baseline value injection.
+	 * An {@link AggregatedInvocationSequenceData} is considered as a
+	 * <code>Time Wasting Operation</code>, if the cumulative exclusive time of already found
+	 * <code>Time Wasting Operations</code> subtracted from the <code>Global Context's</code>
+	 * duration is higher than the baseline (= 1000).
 	 */
 	@SessionVariable(name = RuleConstants.VAR_BASELINE, optional = false)
 	private double baseline;
@@ -65,8 +71,8 @@ public class TimeWastingOperationsRule {
 				new ArrayList<InvocationSequenceData>(globalContext.getNestedSequences().size()));
 		AggregationPerformer<InvocationSequenceData> aggregationPerformer = new AggregationPerformer<InvocationSequenceData>(new InvocationSequenceDataAggregator());
 
-		// Aggregates all calls to one operation to an object of type
-		// InvocationSequenceData. Exclusive times are summed up.
+		// Aggregates all methods with the same key to an object of type
+		// AggregatedInvocationSequenceData. Exclusive times are summed up.
 		aggregationPerformer.processCollection(invocationSequenceDataList);
 		invocationSequenceDataList = aggregationPerformer.getResultList();
 
@@ -81,13 +87,15 @@ public class TimeWastingOperationsRule {
 			}
 		});
 
-		// Only aggregated InvocationSequenceData with highest exclusive
-		// times are Time Wasting Operations.
+		// Only AggregatedInvocationSequenceData with highest exclusive
+		// times are Time Wasting Operations or when the AggregatedInvocationSequenceData consists
+		// of more than 20 methods.
 		List<AggregatedInvocationSequenceData> timeWastingOperations = new ArrayList<>();
 		double sumExecTime = 0;
 		for (InvocationSequenceData invocSeqData : invocationSequenceDataList) {
 			AggregatedInvocationSequenceData aggInvocSeqData = (AggregatedInvocationSequenceData) invocSeqData;
-			if (((globalContext.getDuration() - sumExecTime) > baseline) || (sumExecTime < (PROPORTION * globalContext.getDuration())) || (aggInvocSeqData.size() > MINNUMBEROFCALLSTOSAMEMETHOD)) {
+			if (((globalContext.getDuration() - sumExecTime) > baseline) || (sumExecTime < (PROPORTION * globalContext.getDuration())) || (aggInvocSeqData.size() > MIN_NUMBER_OF_CALLS_TO_SAME_METHOD)) {
+				// increase sumExclusiveTime by duration of Time Wasting Operation.
 				sumExecTime += InvocationSequenceDataHelper.calculateExclusiveTime(invocSeqData);
 				timeWastingOperations.add(aggInvocSeqData);
 			} else {

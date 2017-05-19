@@ -22,12 +22,14 @@ import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 public class GlobalContextRule {
 
 	/**
-	 * Proportion value for comparison.
+	 * The duration of a node has to be higher than 80 percent of the trace duration in order to be
+	 * a dominating call in the invocation tree.
 	 */
 	private static final double PROPORTION = 0.8;
 
 	/**
-	 * Baseline value injection.
+	 * The duration of a node subtracted from the trace duration has to be lower than the baseline
+	 * (= 1000) in order to be a dominating call in the invocation tree.
 	 */
 	@SessionVariable(name = RuleConstants.VAR_BASELINE, optional = false)
 	private double baseline;
