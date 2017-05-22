@@ -1,7 +1,6 @@
 package rocks.inspectit.server.diagnosis.service.rules.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.Mockito.when;
 
@@ -39,6 +38,7 @@ public class ProblemContextRuleTest extends TestBase {
 		private static final Timestamp DEF_DATE = new Timestamp(new Date().getTime());
 		private static final long PLATFORM_IDENT = RANDOM.nextLong();
 		private static final long SENSOR_TYPE_IDENT = RANDOM.nextLong();
+		private static final Timestamp CURRENT_TIME = new Timestamp(System.currentTimeMillis());
 
 		private InvocationSequenceData parentSequence = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
 		private InvocationSequenceData childSequence = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
@@ -52,7 +52,7 @@ public class ProblemContextRuleTest extends TestBase {
 
 			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(equalTo(parentSequence)));
+			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(parentSequence));
 		}
 
 		@Test
@@ -64,118 +64,107 @@ public class ProblemContextRuleTest extends TestBase {
 
 			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(equalTo(childSequence.getParentSequence())));
+			assertThat("The returned problemContext must be the invoker", problemContext.getCommonContext(), is(childSequence.getParentSequence()));
 		}
 
 		@Test
 		public void problemContextMustBeTheMostSignificantClusterContext() {
 			List<InvocationSequenceData> rawInvocations = new ArrayList<InvocationSequenceData>();
-
-			// InvocationSequenceData rootInvocation = new InvocationSequenceData(DEF_DATE,
-			// PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-
-			TimerData timerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			TimerData timerData = new TimerData(CURRENT_TIME, 10L, 20L, 30L);
 			timerData.calculateExclusiveMin(RANDOM.nextDouble());
-			timerData.setExclusiveDuration(2000.0);
+			timerData.setExclusiveDuration(2000d);
 			globalContext.setTimerData(timerData);
-			// globalContext.setParentSequence(rootInvocation);
-
 			InvocationSequenceData firstSeqWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-			TimerData timerData2 = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerData2.calculateExclusiveMin(RANDOM.nextDouble());
-			timerData2.setExclusiveDuration(2000.0);
-			firstSeqWithParent.setTimerData(timerData2);
+			firstSeqWithParent.setTimerData(timerData);
 			firstSeqWithParent.setParentSequence(globalContext);
 			globalContext.getNestedSequences().add(firstSeqWithParent);
-
 			InvocationSequenceData significantContext = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-			TimerData significantContextTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			significantContextTimerData.calculateExclusiveMin(RANDOM.nextDouble());
-			significantContextTimerData.setExclusiveDuration(8000.0);
-			significantContext.setTimerData(significantContextTimerData);
+			timerData.setExclusiveDuration(8000d);
+			significantContext.setTimerData(timerData);
 			significantContext.setParentSequence(globalContext);
-
 			InvocationSequenceData significantContextChildWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-			TimerData significantseqWithParentTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			significantseqWithParentTimerData.calculateExclusiveMin(RANDOM.nextDouble());
-			significantseqWithParentTimerData.setExclusiveDuration(4000.0);
-			significantContextChildWithParent.setTimerData(significantseqWithParentTimerData);
+			timerData.setExclusiveDuration(4000d);
+			significantContextChildWithParent.setTimerData(timerData);
 			significantContextChildWithParent.setParentSequence(significantContext);
 			significantContext.getNestedSequences().add(significantContextChildWithParent);
-
-			InvocationSequenceData significantContextChildWithParent2 = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-			TimerData significantseqWithParentTimerData2 = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			significantseqWithParentTimerData2.calculateExclusiveMin(RANDOM.nextDouble());
-			significantseqWithParentTimerData2.setExclusiveDuration(4000.0);
-			significantContextChildWithParent2.setTimerData(significantseqWithParentTimerData2);
-			significantContextChildWithParent2.setParentSequence(significantContext);
-			significantContext.getNestedSequences().add(significantContextChildWithParent2);
-
+			InvocationSequenceData secondSignificantContextChildWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			secondSignificantContextChildWithParent.setTimerData(timerData);
+			secondSignificantContextChildWithParent.setParentSequence(significantContext);
+			significantContext.getNestedSequences().add(secondSignificantContextChildWithParent);
 			InvocationSequenceData secondRawInvocation = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
-			TimerData timerData3 = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerData3.calculateExclusiveMin(RANDOM.nextDouble());
-			timerData3.setExclusiveDuration(2000.0);
-			secondRawInvocation.setTimerData(timerData3);
+			timerData.setExclusiveDuration(2000d);
+			secondRawInvocation.setTimerData(timerData);
 			secondRawInvocation.setParentSequence(globalContext);
-
 			InvocationSequenceData secondSeqWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
 			secondSeqWithParent.setParentSequence(secondRawInvocation);
 			secondRawInvocation.getNestedSequences().add(secondSeqWithParent);
-
 			rawInvocations.add(firstSeqWithParent);
 			rawInvocations.add(significantContext);
 			rawInvocations.add(secondRawInvocation);
-
 			List<InvocationSequenceData> rawInvocationsSignificant = new ArrayList<InvocationSequenceData>();
 			rawInvocationsSignificant.add(significantContextChildWithParent);
-			rawInvocationsSignificant.add(significantContextChildWithParent2);
-
+			rawInvocationsSignificant.add(secondSignificantContextChildWithParent);
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocationsSignificant);
 			when(globalContext.getNestedSequences()).thenReturn(rawInvocations);
+
 			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(equalTo(significantContext)));
+			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(significantContext));
 		}
 
 		@Test
 		public void problemContextMustBeGlobalContext() {
-
 			List<InvocationSequenceData> rawInvocations = new ArrayList<InvocationSequenceData>();
-			TimerData timerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			// timerData.calculateExclusiveMin(RANDOM.nextDouble());
+			TimerData timerData = new TimerData(CURRENT_TIME, 10L, 20L, 30L);
+			timerData.calculateExclusiveMin(RANDOM.nextDouble());
 			timerData.setExclusiveDuration(RANDOM.nextDouble());
 			when(globalContext.getTimerData()).thenReturn(timerData);
 			rawInvocations.add(globalContext);
-
 			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 
 			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(equalTo(globalContext)));
+			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(globalContext));
 		}
 
 		@Test
-		public void problemContextMustBeTheMostSignificantClusterContextWithOneInvocationSequence() {
+		public void problemContextMustBeTheMostSignificantClusterContextWithoutClustering() {
+			double highDuration = RANDOM.nextDouble() + 1000;
 			List<InvocationSequenceData> rawInvocations = new ArrayList<InvocationSequenceData>();
-
 			TimerData timerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
 			timerData.calculateExclusiveMin(RANDOM.nextDouble());
-			timerData.setExclusiveDuration(2000.0);
-			globalContext.setTimerData(timerData);
-
-			rawInvocations.add(globalContext);
-
-			List<InvocationSequenceData> rawInvocationsSignificant = new ArrayList<InvocationSequenceData>();
-			rawInvocationsSignificant.add(globalContext);
-
-			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocationsSignificant);
-			when(globalContext.getNestedSequences()).thenReturn(rawInvocations);
+			timerData.setExclusiveDuration(RANDOM.nextDouble());
+			InvocationSequenceData firstRawInvocation = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			firstRawInvocation.setTimerData(timerData);
+			InvocationSequenceData firstSeqWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			firstSeqWithParent.setTimerData(timerData);
+			firstSeqWithParent.setParentSequence(new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT));
+			firstRawInvocation.getNestedSequences().add(firstSeqWithParent);
+			InvocationSequenceData significantContext = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			TimerData significantContextTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			significantContextTimerData.calculateExclusiveMin(RANDOM.nextDouble());
+			significantContextTimerData.setExclusiveDuration(highDuration);
+			significantContext.setTimerData(significantContextTimerData);
+			InvocationSequenceData significantContextChildWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			TimerData significantseqWithParentTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			significantseqWithParentTimerData.calculateExclusiveMin(RANDOM.nextDouble());
+			significantseqWithParentTimerData.setExclusiveDuration(highDuration);
+			significantContextChildWithParent.setTimerData(significantseqWithParentTimerData);
+			significantContextChildWithParent.setParentSequence(new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT));
+			significantContext.getNestedSequences().add(significantContextChildWithParent);
+			InvocationSequenceData secondRawInvocation = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			secondRawInvocation.setTimerData(timerData);
+			InvocationSequenceData secondSeqWithParent = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT);
+			secondSeqWithParent.setParentSequence(new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT));
+			secondRawInvocation.getNestedSequences().add(secondSeqWithParent);
+			rawInvocations.add(firstRawInvocation);
+			rawInvocations.add(significantContext);
+			rawInvocations.add(secondRawInvocation);
+			when(timeWastingOperation.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 
 			CauseCluster problemContext = problemContextRule.action();
 
-			assertThat("The returned problemContext must be the most significant cluster context with one invocation sequence", problemContext.getCommonContext(), is(equalTo(globalContext)));
+			assertThat("The returned problemContext must be the most significant cluster context", problemContext.getCommonContext(), is(significantContext));
 		}
-
 	}
-
 }

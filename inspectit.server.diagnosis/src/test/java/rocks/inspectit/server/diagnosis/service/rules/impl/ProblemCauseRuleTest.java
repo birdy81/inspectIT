@@ -38,6 +38,8 @@ public class ProblemCauseRuleTest extends TestBase {
 		private static final Random RANDOM = new Random();
 		private static final Timestamp DEF_DATE = new Timestamp(new Date().getTime());
 		private static final long METHOD_IDENT_EQUAL = 108L;
+		private static final long METHOD_IDENT_DIFF = 100L;
+		private static final TimerData TIMER_DATA = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
 		private static final long PLATFORM_IDENT = RANDOM.nextLong();
 		private static final long SENSOR_TYPE_IDENT = RANDOM.nextLong();
 		private static final double HIGH_DURATION = RANDOM.nextDouble() + 1000;
@@ -46,15 +48,14 @@ public class ProblemCauseRuleTest extends TestBase {
 		public void rootCauseMustBeNotNullWhenMethodIdentIsEqualAndTheInvocationHasTimerData() {
 			List<InvocationSequenceData> nestedSequences = new ArrayList<InvocationSequenceData>();
 			InvocationSequenceData firstSequenceData = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			TimerData timerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			TimerData timerData = TIMER_DATA;
 			timerData.calculateExclusiveMin(RANDOM.nextDouble());
 			timerData.setExclusiveDuration(RANDOM.nextDouble());
 			firstSequenceData.setTimerData(timerData);
 			InvocationSequenceData secondSequenceData = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			TimerData secondTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			secondTimerData.calculateExclusiveMin(RANDOM.nextDouble());
-			secondTimerData.setExclusiveDuration(RANDOM.nextDouble());
-			secondSequenceData.setTimerData(secondTimerData);
+			timerData.calculateExclusiveMin(RANDOM.nextDouble());
+			timerData.setExclusiveDuration(RANDOM.nextDouble());
+			secondSequenceData.setTimerData(timerData);
 			nestedSequences.add(firstSequenceData);
 			nestedSequences.add(secondSequenceData);
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
@@ -73,9 +74,9 @@ public class ProblemCauseRuleTest extends TestBase {
 			nestedSequences.add(new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL));
 			nestedSequences.add(new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL));
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
-			when(problemContext.getCommonContext().getMethodIdent()).thenReturn(1L);
-			when(problemContext.getCommonContext().getDuration()).thenReturn(0.0);
-			when(problemContext.getCauseInvocations()).thenReturn(nestedSequences);
+			when(commonContext.getMethodIdent()).thenReturn(1L);
+			when(commonContext.getDuration()).thenReturn(HIGH_DURATION);
+			when(commonContext.getNestedSequences()).thenReturn(nestedSequences);
 
 			AggregatedInvocationSequenceData rootCause = problemCauseRule.action();
 
@@ -86,25 +87,17 @@ public class ProblemCauseRuleTest extends TestBase {
 		public void rootCauseMustHaveTwoElementsInRawInvocationSequence() {
 			List<InvocationSequenceData> nestedSequences = new ArrayList<InvocationSequenceData>();
 			InvocationSequenceData firstSequenceData = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			TimerData firstTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			TimerData firstTimerData = TIMER_DATA;
 			firstTimerData.setExclusiveDuration(2000);
 			firstTimerData.setDuration(2000);
 			firstSequenceData.setTimerData(firstTimerData);
 			InvocationSequenceData secondSequenceData = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			TimerData secondTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			secondTimerData.setExclusiveDuration(1000);
-			secondTimerData.setDuration(1000);
+			TimerData secondTimerData = TIMER_DATA;
+			secondTimerData.setExclusiveDuration(100);
+			secondTimerData.setDuration(100);
 			secondSequenceData.setTimerData(secondTimerData);
-			InvocationSequenceData thirdSequenceData = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
-			TimerData thirdTimerData = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			thirdTimerData.setExclusiveDuration(100);
-			thirdTimerData.setDuration(100);
-			thirdSequenceData.setTimerData(thirdTimerData);
-
 			nestedSequences.add(firstSequenceData);
 			nestedSequences.add(secondSequenceData);
-			nestedSequences.add(thirdSequenceData);
-
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
 			when(commonContext.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(commonContext.getDuration()).thenReturn(3100.0);
@@ -112,7 +105,46 @@ public class ProblemCauseRuleTest extends TestBase {
 
 			AggregatedInvocationSequenceData rootCause = problemCauseRule.action();
 
-			assertThat("Raw invocation sequence must have two elements", rootCause.getRawInvocationsSequenceElements(), hasSize(3));
+			assertThat("Raw invocation sequence must have two elements", rootCause.getRawInvocationsSequenceElements(), hasSize(2));
+		}
+
+		@Test
+		public void rootCauseMustAggregateElementsWithThreeSigmaLimitApproach() {
+			InvocationSequenceData currentProblemContext = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
+			TimerData timerDataCurrentProblemContext = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			timerDataCurrentProblemContext.setDuration(2000d);
+			timerDataCurrentProblemContext.setExclusiveDuration(100d);
+			currentProblemContext.setTimerData(timerDataCurrentProblemContext);
+			currentProblemContext.setDuration(2000d);
+			InvocationSequenceData firstMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
+			TimerData timerDataFirstMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			timerDataFirstMethod.setDuration(800d);
+			firstMethod.setTimerData(timerDataFirstMethod);
+			firstMethod.setDuration(800d);
+			InvocationSequenceData secondMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
+			TimerData timerDataSecondMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			timerDataSecondMethod.setDuration(800d);
+			secondMethod.setTimerData(timerDataSecondMethod);
+			secondMethod.setDuration(800d);
+			InvocationSequenceData thirdMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
+			TimerData timerDataThirdMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
+			timerDataThirdMethod.setDuration(900d);
+			thirdMethod.setTimerData(timerDataThirdMethod);
+			thirdMethod.setDuration(900d);
+			currentProblemContext.getNestedSequences().add(firstMethod);
+			currentProblemContext.getNestedSequences().add(secondMethod);
+			currentProblemContext.getNestedSequences().add(thirdMethod);
+			firstMethod.setParentSequence(currentProblemContext);
+			secondMethod.setParentSequence(currentProblemContext);
+			thirdMethod.setParentSequence(currentProblemContext);
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
+			when(commonContext.getMethodIdent()).thenReturn(currentProblemContext.getMethodIdent());
+			when(commonContext.getDuration()).thenReturn(currentProblemContext.getDuration());
+			when(problemContext.getCauseInvocations()).thenReturn(currentProblemContext.getNestedSequences());
+
+			AggregatedInvocationSequenceData rootCause = problemCauseRule.action();
+
+			assertThat("Raw invocation sequence must have seven elements", rootCause.getRawInvocationsSequenceElements(), hasSize(3));
 		}
 	}
 
