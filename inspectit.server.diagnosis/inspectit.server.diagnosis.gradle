@@ -22,6 +22,7 @@ configurations {
 	}
 	testCompile {
 		extendsFrom configurations.serverDiagnosisTest
+		extendsFrom configurations.jmhbase
 	}
 }
 
@@ -30,6 +31,8 @@ dependencies {
 	compile project(':inspectit.shared.all')
 	compile project(':inspectit.shared.cs')
 	testCompile project (path: ':inspectit.shared.all', configuration: 'testArchives')
+	testCompile project (path: ':inspectit.server', configuration: 'serverTest')
+	
 }
 
 /** Compile compatibility to 1.7 for all compile tasks */
