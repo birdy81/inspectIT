@@ -1,6 +1,5 @@
 package rocks.inspectit.server.diagnosis.results;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import org.springframework.context.annotation.Scope;
@@ -25,7 +24,7 @@ public class DiagnosisResults implements IDiagnosisResults<ProblemOccurrence> {
 	/**
 	 * Stores the resulting ProblemOccurrences.
 	 */
-	Set<ProblemOccurrence> resultingSet = new HashSet<ProblemOccurrence>(1000);
+	LimitedSet<ProblemOccurrence> resultingSet = new LimitedSet<ProblemOccurrence>(1000);
 
 	/**
 	 * Gets {@link #resultingSet}.
@@ -34,7 +33,7 @@ public class DiagnosisResults implements IDiagnosisResults<ProblemOccurrence> {
 	 */
 	@Override
 	public final Set<ProblemOccurrence> getDiagnosisResults() {
-		return this.resultingSet;
+		return this.resultingSet.getHashSetCopy();
 	}
 
 }
