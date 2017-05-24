@@ -47,6 +47,17 @@ public class TimeWastingOperationsRuleTest extends TestBase {
 		private static final long PLATFORM_IDENT = RANDOM.nextLong();
 		private static final long SENSOR_TYPE_IDENT = RANDOM.nextLong();
 
+		@BeforeMethod
+		private void init() {
+			try {
+				Field field = TimeWastingOperationsRule.class.getDeclaredField("baseline");
+				field.setAccessible(true);
+				field.set(timeWastingOperationsRule, BASELINE);
+			} catch (NoSuchFieldException | IllegalArgumentException | SecurityException | IllegalAccessException e) {
+				e.printStackTrace();
+			}
+		}
+
 		/**
 		 * Checks that the sequenceData have all the mandatory attributes.
 		 *
@@ -62,28 +73,6 @@ public class TimeWastingOperationsRuleTest extends TestBase {
 				assertThat("Child count of the aggregated sequence cannot be null", aggregatedSequence.getChildCount(), notNullValue());
 				assertThat("ApplicationId of the aggregated sequence cannot be null", aggregatedSequence.getApplicationId(), notNullValue());
 				assertThat("Business transaction id of the aggregated sequence cannot be null", aggregatedSequence.getBusinessTransactionId(), notNullValue());
-			}
-		}
-
-		@BeforeMethod
-		private void init() {
-			Field baseLineField;
-			try {
-				baseLineField = TimeWastingOperationsRule.class.getDeclaredField("baseline");
-				baseLineField.setAccessible(true);
-				baseLineField.setDouble(timeWastingOperationsRule, BASELINE);
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
 			}
 		}
 

@@ -1,7 +1,6 @@
 package rocks.inspectit.server.diagnosis.service.rules.impl;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
@@ -33,7 +32,7 @@ public class GlobalContextRuleTest extends TestBase {
 
 	public static class Action extends GlobalContextRuleTest {
 
-		private static final double BASELINE = 1000L;
+		private static final double BASELINE = 1000d;
 		private static final double HIGH_DURATION = 4700d;
 		private static final long METHOD_IDENT = 108L;
 		private static final Timestamp DEF_DATE = new Timestamp(new Date().getTime());
@@ -43,22 +42,11 @@ public class GlobalContextRuleTest extends TestBase {
 
 		@BeforeMethod
 		private void init() {
-			Field baseLineField;
 			try {
-				baseLineField = GlobalContextRule.class.getDeclaredField("baseline");
-				baseLineField.setAccessible(true);
-				baseLineField.setDouble(globalContextRule, BASELINE);
-			} catch (NoSuchFieldException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (SecurityException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
+				Field field = GlobalContextRule.class.getDeclaredField("baseline");
+				field.setAccessible(true);
+				field.set(globalContextRule, BASELINE);
+			} catch (NoSuchFieldException | IllegalArgumentException | SecurityException | IllegalAccessException e) {
 				e.printStackTrace();
 			}
 		}
@@ -66,7 +54,9 @@ public class GlobalContextRuleTest extends TestBase {
 		@Test
 		private void currentGlobalContextRuleMustNotBeNull() {
 			when(invocationSequenceRoot.getDuration()).thenReturn(HIGH_DURATION);
+
 			InvocationSequenceData currentGlobalContextRule = globalContextRule.action();
+
 			assertThat("Invocation sequence root must not be null", currentGlobalContextRule, notNullValue());
 		}
 
@@ -87,7 +77,7 @@ public class GlobalContextRuleTest extends TestBase {
 
 			InvocationSequenceData currentGlobalContextRule = globalContextRule.action();
 
-			assertThat("The returned global context rule must be the child with higher duration", currentGlobalContextRule, is(equalTo(higherDurationChild)));
+			assertThat("The returned global context rule must be the child with higher duration", currentGlobalContextRule, is(higherDurationChild));
 		}
 
 		@Test
@@ -107,8 +97,7 @@ public class GlobalContextRuleTest extends TestBase {
 
 			InvocationSequenceData currentGlobalContextRule = globalContextRule.action();
 
-			assertThat("The returned global context rule must be the child with higher duration", currentGlobalContextRule, not(is(equalTo(higherDurationChild))));
+			assertThat("The returned global context rule must be the child with higher duration", currentGlobalContextRule, not(is(higherDurationChild)));
 		}
-
 	}
 }
