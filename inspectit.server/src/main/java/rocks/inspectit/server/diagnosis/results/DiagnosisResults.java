@@ -33,7 +33,7 @@ public class DiagnosisResults implements IDiagnosisResults<ProblemOccurrence> {
 	 */
 	@Override
 	public final Set<ProblemOccurrence> getDiagnosisResults() {
-		return this.resultingSet.getHashSetCopy();
+		return this.resultingSet;
 	}
 
 }
