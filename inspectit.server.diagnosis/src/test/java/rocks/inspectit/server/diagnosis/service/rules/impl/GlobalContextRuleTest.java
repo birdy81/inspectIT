@@ -21,6 +21,11 @@ import org.testng.annotations.Test;
 import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.testbase.TestBase;
 
+/**
+ *
+ * @author Isabel Vico Peinado
+ *
+ */
 public class GlobalContextRuleTest extends TestBase {
 
 	@InjectMocks
@@ -28,7 +33,6 @@ public class GlobalContextRuleTest extends TestBase {
 
 	@Mock
 	InvocationSequenceData invocationSequenceRoot;
-
 
 	public static class Action extends GlobalContextRuleTest {
 

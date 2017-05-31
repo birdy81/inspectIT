@@ -26,7 +26,9 @@ import rocks.inspectit.shared.all.communication.data.TimerData;
 import rocks.inspectit.shared.all.testbase.TestBase;
 
 /**
+ *
  * @author Isabel Vico Peinado
+ *
  */
 @SuppressWarnings("PMD")
 public class TimeWastingOperationsRuleTest extends TestBase {
@@ -239,6 +241,24 @@ public class TimeWastingOperationsRuleTest extends TestBase {
 		}
 
 		/**
+		 * Tests that checks that the returned element is a cloned global context if the element has
+		 * no nested sequences
+		 */
+		@Test
+		public void timerDataMustReturnAClonedElementOfTheGlobalContextIfItHasNoNestedSequences() {
+			List<InvocationSequenceData> nestedSequences = new ArrayList<>();
+			when(globalContext.getTimerData()).thenReturn(TIMER_DATA);
+			when(globalContext.getDuration()).thenReturn(HIGH_DURATION);
+			when(globalContext.getMethodIdent()).thenReturn(108L);
+			when(globalContext.getNestedSequences()).thenReturn(nestedSequences);
+
+			List<AggregatedDiagnosisInvocationData> timeWastingOperationsResults = timeWastingOperationsRule.action();
+
+			assertThat("Method ident must be the same that the global context", timeWastingOperationsResults.get(0).getMethodIdent(), is(108L));
+
+		}
+
+		/**
 		 * Tests that the action method of the rule is not returning a null group of rules.
 		 */
 		@Test
@@ -395,9 +415,10 @@ public class TimeWastingOperationsRuleTest extends TestBase {
 
 			List<AggregatedDiagnosisInvocationData> timeWastingOperationsResults = timeWastingOperationsRule.action();
 
-			assertThat("Identifier is not the expected one, the first result must have 1 as method identifier", timeWastingOperationsResults.get(0).getMethodIdent(), is(1L));
-			assertThat("Identifier is not the expected one, the first result must have 3 as method identifier", timeWastingOperationsResults.get(1).getMethodIdent(), is(3L));
+			assertThat("Identifier is not the expected one, the first result must have 3 as method identifier", timeWastingOperationsResults.get(0).getMethodIdent(), is(3L));
+			assertThat("Identifier is not the expected one, the first result must have 1 as method identifier", timeWastingOperationsResults.get(1).getMethodIdent(), is(1L));
 		}
+
 	}
 
 }

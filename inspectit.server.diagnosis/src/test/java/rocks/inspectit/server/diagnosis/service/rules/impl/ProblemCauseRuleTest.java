@@ -22,6 +22,11 @@ import rocks.inspectit.shared.all.communication.data.InvocationSequenceData;
 import rocks.inspectit.shared.all.communication.data.TimerData;
 import rocks.inspectit.shared.all.testbase.TestBase;
 
+/**
+ *
+ * @author Isabel Vico Peinado
+ *
+ */
 public class ProblemCauseRuleTest extends TestBase {
 
 	@InjectMocks
@@ -112,25 +117,28 @@ public class ProblemCauseRuleTest extends TestBase {
 		public void rootCauseMustAggregateElementsWithThreeSigmaLimitApproach() {
 			InvocationSequenceData currentProblemContext = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
 			TimerData timerDataCurrentProblemContext = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerDataCurrentProblemContext.setDuration(2000d);
-			timerDataCurrentProblemContext.setExclusiveDuration(100d);
+			timerDataCurrentProblemContext.setExclusiveDuration(2500d);
+			timerDataCurrentProblemContext.calculateExclusiveMin(1d);
 			currentProblemContext.setTimerData(timerDataCurrentProblemContext);
-			currentProblemContext.setDuration(2000d);
+			currentProblemContext.setDuration(2500d);
 			InvocationSequenceData firstMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
 			TimerData timerDataFirstMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerDataFirstMethod.setDuration(800d);
+			timerDataFirstMethod.setExclusiveDuration(1200d);
+			timerDataFirstMethod.calculateExclusiveMin(1d);
 			firstMethod.setTimerData(timerDataFirstMethod);
-			firstMethod.setDuration(800d);
+			firstMethod.setDuration(1200d);
 			InvocationSequenceData secondMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
 			TimerData timerDataSecondMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerDataSecondMethod.setDuration(800d);
+			timerDataSecondMethod.setExclusiveDuration(800d);
+			timerDataSecondMethod.calculateExclusiveMin(1d);
 			secondMethod.setTimerData(timerDataSecondMethod);
 			secondMethod.setDuration(800d);
 			InvocationSequenceData thirdMethod = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_EQUAL);
 			TimerData timerDataThirdMethod = new TimerData(new Timestamp(System.currentTimeMillis()), 10L, 20L, 30L);
-			timerDataThirdMethod.setDuration(900d);
+			timerDataThirdMethod.setExclusiveDuration(500d);
+			timerDataThirdMethod.calculateExclusiveMin(1d);
 			thirdMethod.setTimerData(timerDataThirdMethod);
-			thirdMethod.setDuration(900d);
+			thirdMethod.setDuration(500d);
 			currentProblemContext.getNestedSequences().add(firstMethod);
 			currentProblemContext.getNestedSequences().add(secondMethod);
 			currentProblemContext.getNestedSequences().add(thirdMethod);

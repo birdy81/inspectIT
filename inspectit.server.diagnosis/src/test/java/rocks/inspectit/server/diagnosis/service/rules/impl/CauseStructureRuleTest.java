@@ -26,6 +26,11 @@ import rocks.inspectit.shared.all.testbase.TestBase;
 import rocks.inspectit.shared.cs.communication.data.diagnosis.CauseStructure;
 import rocks.inspectit.shared.cs.communication.data.diagnosis.CauseStructure.CauseType;
 
+/**
+ *
+ * @author Isabel Vico Peinado
+ *
+ */
 public class CauseStructureRuleTest extends TestBase {
 
 	@InjectMocks
@@ -140,9 +145,11 @@ public class CauseStructureRuleTest extends TestBase {
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
 			when(commonContext.getParentSequence()).thenReturn(parentSequence);
 			when(commonContext.getTimerData()).thenReturn(TIMER_DATA_SQL);
+			when(commonContext.getSqlStatementData()).thenReturn(TIMER_DATA_SQL);
 			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
 			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
 			when(cause.getTimerData()).thenReturn(TIMER_DATA_SQL);
+			when(cause.getSqlStatementData()).thenReturn(TIMER_DATA_SQL);
 
 			CauseStructure causeStructure = causeStructureRule.action();
 
@@ -152,7 +159,7 @@ public class CauseStructureRuleTest extends TestBase {
 		@Test
 		public void sqlStatementDataMustReturnAnInstanceOfSingleDataBaseCauseTypeIfTheCauseHasJustOneElement() {
 			when(cause.size()).thenReturn(1);
-			when(cause.getTimerData()).thenReturn(TIMER_DATA_SQL);
+			when(cause.getSqlStatementData()).thenReturn(TIMER_DATA_SQL);
 
 			CauseStructure causeStructure = causeStructureRule.action();
 
@@ -175,14 +182,16 @@ public class CauseStructureRuleTest extends TestBase {
 			secondMethod.setParentSequence(firstMethod);
 			when(cause.getMethodIdent()).thenReturn(detectedProblemContext.getNestedSequences().get(0).getMethodIdent());
 			when(cause.size()).thenReturn(2);
-			when(cause.getTimerData()).thenReturn(TIMER_DATA_SQL);
+			when(cause.getSqlStatementData()).thenReturn(TIMER_DATA_SQL);
 			when(problemContext.getCommonContext()).thenReturn(commonContext);
 			when(commonContext.getParentSequence()).thenReturn(null);
 			when(commonContext.getNestedSequences()).thenReturn(Collections.singletonList(detectedProblemContext));
 			when(commonContext.getMethodIdent()).thenReturn(firstMethod.getMethodIdent());
 			when(commonContext.getTimerData()).thenReturn(firstMethod.getTimerData());
-			when(problemContext.getCauseInvocations()).thenReturn(detectedProblemContext.getNestedSequences());
 			when(commonContext.getDuration()).thenReturn(firstMethod.getDuration());
+			when(commonContext.getSqlStatementData()).thenReturn(TIMER_DATA_SQL);
+			when(problemContext.getCauseInvocations()).thenReturn(detectedProblemContext.getNestedSequences());
+
 
 			CauseStructure causeStructure = causeStructureRule.action();
 
@@ -251,5 +260,23 @@ public class CauseStructureRuleTest extends TestBase {
 			assertThat("The returned cause type must be iterative", causeStructure.getCauseType(), is(CauseType.ITERATIVE));
 		}
 
+		@Test
+		public void differentTimerDataMustReturnAnInstanceOfIterativeCauseType() {
+			InvocationSequenceData childSequence = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
+			InvocationSequenceData parentSequence = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
+			InvocationSequenceData grandParentSequence = new InvocationSequenceData(DEF_DATE, PLATFORM_IDENT, SENSOR_TYPE_IDENT, METHOD_IDENT_DIFF);
+			parentSequence.setParentSequence(grandParentSequence);
+			List<InvocationSequenceData> rawInvocations = new ArrayList<>();
+			rawInvocations.add(new InvocationSequenceData());
+			rawInvocations.add(childSequence);
+			when(problemContext.getCommonContext()).thenReturn(commonContext);
+			when(commonContext.getParentSequence()).thenReturn(parentSequence);
+			when(cause.getRawInvocationsSequenceElements()).thenReturn(rawInvocations);
+			when(cause.getMethodIdent()).thenReturn(METHOD_IDENT_EQUAL);
+
+			CauseStructure causeStructure = causeStructureRule.action();
+
+			assertThat("The returned cause type must be iterative", causeStructure.getCauseType(), is(CauseType.ITERATIVE));
+		}
 	}
 }

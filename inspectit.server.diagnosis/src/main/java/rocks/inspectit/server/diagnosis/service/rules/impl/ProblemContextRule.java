@@ -42,7 +42,7 @@ public class ProblemContextRule {
 	 * Injection of the <code>Global Context</code>.
 	 */
 	@TagValue(type = RuleConstants.DIAGNOSIS_TAG_GLOBAL_CONTEXT)
-	private InvocationSequenceData globalContext;
+	InvocationSequenceData globalContext;
 
 	/**
 	 * Each <code>Time Wasting Operation</code> has exactly one corresponding <code>Problem
